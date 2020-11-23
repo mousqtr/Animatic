@@ -1,15 +1,16 @@
 import React, { Suspense, useRef, useState } from 'react'
-import { Canvas, useFrame, extend, useThree } from 'react-three-fiber'
+import { Canvas, useFrame, extend, useThree, useLoader } from 'react-three-fiber'
 import Webcam from "react-webcam";
 import * as tf from "@tensorflow/tfjs";
 import * as facemesh from "@tensorflow-models/facemesh";
 // import { drawMesh } from "./utilities";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-
+import { TextureLoader, RepeatWrapping } from "three";
 
 import Stacy from "./Stacy"
 import { getMousePos } from "./utils"
+import { BackSide, FrontSide } from 'three';
 
 
 extend({ OrbitControls });
@@ -21,8 +22,33 @@ const CameraControls = () => {
   
   const controls = useRef();  
   useFrame((state) => controls.current.update());  
-  return <orbitControls ref={controls} args={[camera, domElement]} />
-  ;};
+  return <orbitControls ref={controls} args={[camera, domElement]} />;
+};
+
+
+function Wall({ ...props }) {
+  const texture = useLoader(TextureLoader, "/bricks.jpg");
+  return (
+    <mesh {...props} receiveShadow position={[0, 0, -30]} rotation={[0, 0, 0]}>
+      <planeBufferGeometry args={[60, 60, 1, 1]}/>
+      {/* <meshBasicMaterial color="green" /> */}
+      <meshPhongMaterial map={texture} side={2}/>
+    </mesh>
+  )
+}
+
+function Floor({ ...props }) {
+  const texture = useLoader(TextureLoader, "/floor.jpg");
+  texture.wrapS = texture.wrapT = RepeatWrapping;
+  texture.offset.set( 0, 0 );
+  texture.repeat.set( 2, 2 );
+  return (
+    <mesh {...props} receiveShadow position={[0, -20, 0]} rotation={[Math.PI/2, 0, 0]}>
+      <planeBufferGeometry args={[60, 60, 1, 1]}/>
+      <meshPhongMaterial map={texture}  side={2}/>
+    </mesh>
+  )
+}
 
 
 var pos168 = [0, 0, 0]
@@ -80,7 +106,7 @@ function Box(props) {
       onPointerOver={(e) => setHover(true)}
       onPointerOut={(e) => setHover(false)}>
       <boxBufferGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
+      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'}/>
     </mesh>
   )
 }
@@ -223,7 +249,7 @@ export default function App() {
           <Stacy mouse={mouse} position={[0, -10, 0]} scale={[0.08, 0.08, 0.08]} />
         </Suspense>
       </Canvas>  */}
-        <Canvas shadowMap pixelRatio={[1, 1.5]} camera={{ position: [0, -3, 18]}}>
+        <Canvas shadowMap pixelRatio={[1, 1.5]} camera={{ position: [0, 0, 5]}}>
         <CameraControls />
           <hemisphereLight skyColor={"black"} groundColor={0xffffff} intensity={0.68} position={[0, 50, 0]} />
           <directionalLight
@@ -236,13 +262,19 @@ export default function App() {
             shadow-camera-far={1500}
             castShadow
           />
-          <mesh position={[0, 0, -30]}>
+          {/* <mesh position={[0, 0, -30]}>
             <circleBufferGeometry args={[8, 64]} />
             <meshBasicMaterial color="lightpink" />
-          </mesh>
+          </mesh> */}
+          <Suspense fallback={null}>
+            <Wall />
+          </Suspense>
+          <Suspense fallback={null}>
+            <Floor />
+          </Suspense>
           <Suspense fallback={null}>
             <Stacy 
-              position={[0, -20, 0]} 
+              position={[0, -16, -5]} 
               scale={[10, 10 , 10]} />
           </Suspense>
           {/* <Box position={[0, 0, 0]} /> */}
