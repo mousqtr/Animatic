@@ -1,9 +1,28 @@
-import React, { useRef, useState } from 'react'
-import { Canvas, useFrame } from 'react-three-fiber'
+import React, { Suspense, useRef, useState } from 'react'
+import { Canvas, useFrame, extend, useThree } from 'react-three-fiber'
 import Webcam from "react-webcam";
 import * as tf from "@tensorflow/tfjs";
 import * as facemesh from "@tensorflow-models/facemesh";
 // import { drawMesh } from "./utilities";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+
+
+
+import Stacy from "./Stacy"
+import { getMousePos } from "./utils"
+
+
+extend({ OrbitControls });
+const CameraControls = () => {  
+  const {    
+    camera,    
+    gl: { domElement },  
+  } = useThree();  
+  
+  const controls = useRef();  
+  useFrame((state) => controls.current.update());  
+  return <orbitControls ref={controls} args={[camera, domElement]} />
+  ;};
 
 
 var pos168 = [0, 0, 0]
@@ -27,11 +46,11 @@ function Box(props) {
       mesh.current.position.y = -6*(pos168[1]/480) + 3
       mesh.current.position.z = 0
 
-      var faceWidth = pos127[0] - pos356[0]
-      var RightPartWidth = pos356[0] - pos168[0]
+      // var faceWidth = pos127[0] - pos356[0]
+      // var RightPartWidth = pos356[0] - pos168[0]
 
-      var faceHeight = pos10[0] - pos152[0]
-      var TopPartHeight = pos168[0] - pos10[0]
+      // var faceHeight = pos10[0] - pos152[0]
+      // var TopPartHeight = pos168[0] - pos10[0]
 
 
       mesh.current.rotation.x = 0
@@ -73,8 +92,6 @@ const drawMesh = (predictions, ctx) => {
          
           for (let i = 0; i < keypoints.length; i++) {
 
-              // console.log(keypoints[i])
-
               const x = keypoints[i][0];
               const y = keypoints[i][1];
               const z = keypoints[i][2];
@@ -85,11 +102,9 @@ const drawMesh = (predictions, ctx) => {
                   break;
                 case 10:
                   pos10 = [x, y, z]
-                  ctx.fillText(y, x, y);
                   break;
                 case 152:
                   pos152 = [x, y, z]
-                  ctx.fillText(y, x, y);
                   break;
                 case 127:
                   pos127 = [x, y, z]
@@ -102,10 +117,10 @@ const drawMesh = (predictions, ctx) => {
               }
 
               // ctx.fillText(z, x, y);
-              ctx.beginPath();
-              ctx.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
-              ctx.fillStyle = "aqua";
-              ctx.fill();
+              // ctx.beginPath();
+              // ctx.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
+              // ctx.fillStyle = "aqua";
+              // ctx.fill();
 
           }
 
@@ -115,6 +130,8 @@ const drawMesh = (predictions, ctx) => {
 
 
 export default function App() {
+  const mouse = useRef({ x: 0, y: 0 })
+  const d = 8.25
 
   const webcamRef = React.useRef(null);
   const canvasRef = useRef(null);
@@ -124,7 +141,7 @@ export default function App() {
       inputResolution: { width: 640, height: 480 },
       scale: 0.8,
     });
-    //
+    
     setInterval(() => {
       detect(net);
     }, 100);
@@ -165,12 +182,10 @@ export default function App() {
   return (
     <>
     <div style={{ position: "relative", width:"640px", height:"480px", float:"left", border: "2px solid black" }}>
-        <Webcam
+        {/* <Webcam
           ref={webcamRef}
           style={{
             position: "absolute",
-            // marginLeft: "auto",
-            // marginRight: "auto",
             left: 0,
             right: 0,
             textAlign: "center",
@@ -178,14 +193,12 @@ export default function App() {
             width: 640,
             height: 480,
           }}
-        />
+        /> */}
 
         <canvas
           ref={canvasRef}
           style={{
             position: "absolute",
-            // marginLeft: "auto",
-            // marginRight: "auto",
             left: 0,
             right: 0,
             textAlign: "center",
@@ -196,14 +209,45 @@ export default function App() {
         />
       </div>
     
-
     <div style={{ position: "relative", width:"640px", height:"480px", float:"left", border: "2px solid black" }}>
-      <Canvas>
+      {/* <Canvas>
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
         <pointLight position={[-10, -10, -10]} />
         <Box position={[0, 0, 0]} />
-      </Canvas>
+        {/* <mesh position={[0, 0, -10]}>
+          <circleBufferGeometry args={[8, 64]} />
+          <meshBasicMaterial color="green" />
+        </mesh> */}
+        {/* <Suspense fallback={null}>
+          <Stacy mouse={mouse} position={[0, -10, 0]} scale={[0.08, 0.08, 0.08]} />
+        </Suspense>
+      </Canvas>  */}
+        <Canvas shadowMap pixelRatio={[1, 1.5]} camera={{ position: [0, -3, 18]}}>
+        <CameraControls />
+          <hemisphereLight skyColor={"black"} groundColor={0xffffff} intensity={0.68} position={[0, 50, 0]} />
+          <directionalLight
+            position={[-8, -20, 8]}
+            shadow-camera-left={d * -1}
+            shadow-camera-bottom={d * -1}
+            shadow-camera-right={d}
+            shadow-camera-top={d}
+            shadow-camera-near={0.1}
+            shadow-camera-far={1500}
+            castShadow
+          />
+          <mesh position={[0, 0, -30]}>
+            <circleBufferGeometry args={[8, 64]} />
+            <meshBasicMaterial color="lightpink" />
+          </mesh>
+          <Suspense fallback={null}>
+            <Stacy 
+              position={[0, -20, 0]} 
+              scale={[10, 10 , 10]} />
+          </Suspense>
+          {/* <Box position={[0, 0, 0]} /> */}
+        </Canvas>
+
     </div>
 
     </>
