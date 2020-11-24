@@ -9,7 +9,9 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { TextureLoader, RepeatWrapping } from "three";
 
 import Stacy from "./Stacy"
-import { runFacemesh } from "./utilities";
+
+import { runFacemesh } from "./FaceDetection";
+import { runPosenet } from "./PoseDetection";
 
 
 extend({ OrbitControls });
@@ -26,24 +28,66 @@ const CameraControls = () => {
 
 
 function Wall({ ...props }) {
-  const texture = useLoader(TextureLoader, "/bricks.jpg");
+  const texture = useLoader(TextureLoader, "/wall3.jpg");
   return (
-    <mesh {...props} receiveShadow position={[0, 0, -30]} rotation={[0, 0, 0]}>
-      <planeBufferGeometry args={[60, 60, 1, 1]}/>
+    <mesh {...props} receiveShadow position={[0, 20, -30]} rotation={[0, 0, 0]}>
+      <planeBufferGeometry args={[60, 40, 1, 1]}/>
       {/* <meshBasicMaterial color="green" /> */}
       <meshPhongMaterial map={texture} side={2}/>
     </mesh>
   )
 }
 
+function Wall2({ ...props }) {
+  const texture = useLoader(TextureLoader, "/wall4.jpg");
+  return (
+    <mesh {...props} receiveShadow position={[30, 20, 0]} rotation={[0, Math.PI/2, 0]}>
+      <planeBufferGeometry args={[60, 40, 1, 1]}/>
+      {/* <meshBasicMaterial color="green" /> */}
+      <meshPhongMaterial map={texture} side={2}/>
+    </mesh>
+  )
+}
+
+function Wall3({ ...props }) {
+  const texture = useLoader(TextureLoader, "/wall4.jpg");
+  return (
+    <mesh {...props} receiveShadow position={[-30, 20, 0]} rotation={[0, Math.PI/2, 0]}>
+      <planeBufferGeometry args={[60, 40, 1, 1]}/>
+      <meshPhongMaterial map={texture} side={2}/>
+    </mesh>
+  )
+}
+
 function Floor({ ...props }) {
-  const texture = useLoader(TextureLoader, "/floor.jpg");
+  const texture = useLoader(TextureLoader, "/floor2.jpg");
   texture.wrapS = texture.wrapT = RepeatWrapping;
   texture.offset.set( 0, 0 );
   texture.repeat.set( 2, 2 );
   return (
-    <mesh {...props} receiveShadow position={[0, -20, 0]} rotation={[Math.PI/2, 0, 0]}>
+    <mesh {...props} receiveShadow position={[0, 0, 0]} rotation={[Math.PI/2, 0, 0]}>
       <planeBufferGeometry args={[60, 60, 1, 1]}/>
+      <meshPhongMaterial map={texture}  side={2}/>
+    </mesh>
+  )
+}
+
+function Ceiling({ ...props }) {
+  const texture = useLoader(TextureLoader, "/ceiling2.jpg");
+  return (
+    <mesh {...props} receiveShadow position={[0, 40, 0]} rotation={[Math.PI/2, 0, 0]}>
+      <planeBufferGeometry args={[60, 60, 1, 1]}/>
+      <meshPhongMaterial map={texture}  side={2}/>
+    </mesh>
+  )
+}
+
+function Table({ ...props }) {
+  const texture = useLoader(TextureLoader, "/table3.jpg");
+  return (
+    <mesh {...props} receiveShadow position={[0, 6.5, 27]} rotation={[0, 0, 0]}>
+      <boxBufferGeometry args={[20, 13, 5]}/>
+      {/* <meshBasicMaterial color="orange" /> */}
       <meshPhongMaterial map={texture}  side={2}/>
     </mesh>
   )
@@ -110,14 +154,13 @@ function Floor({ ...props }) {
 
 
 export default function App() {
-  const mouse = useRef({ x: 0, y: 0 })
   const d = 8.25
 
   const webcamRef = React.useRef(null);
   const canvasRef = useRef(null);
 
   runFacemesh(webcamRef, canvasRef);
-
+  runPosenet(webcamRef, canvasRef);
 
   return (
     <>
@@ -163,8 +206,8 @@ export default function App() {
           <Stacy mouse={mouse} position={[0, -10, 0]} scale={[0.08, 0.08, 0.08]} />
         </Suspense>
       </Canvas>  */}
-        <Canvas shadowMap pixelRatio={[1, 1.5]} camera={{ position: [0, 0, 5]}}>
-        <CameraControls />
+        <Canvas shadowMap pixelRatio={[1, 1.5]} camera={{ position: [0, 20, 30], rotation: [0, 180, 0]}} >
+          <CameraControls />
           <hemisphereLight skyColor={"black"} groundColor={0xffffff} intensity={0.68} position={[0, 50, 0]} />
           <directionalLight
             position={[-8, -20, 8]}
@@ -182,13 +225,15 @@ export default function App() {
           </mesh> */}
           <Suspense fallback={null}>
             <Wall />
-          </Suspense>
-          <Suspense fallback={null}>
+            <Wall2 />
+            <Wall3 />
             <Floor />
+            <Ceiling />
+            <Table />
           </Suspense>
           <Suspense fallback={null}>
             <Stacy 
-              position={[0, -16, -5]} 
+              position={[0, -16, 0]} 
               scale={[10, 10 , 10]} />
           </Suspense>
           {/* <Box position={[0, 0, 0]} /> */}

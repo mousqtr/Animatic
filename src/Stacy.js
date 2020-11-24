@@ -3,13 +3,25 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useLoader, useFrame } from "react-three-fiber";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { TextureLoader } from "three";
-import { getCoordinates } from "./utilities";
+import { getFaceCoordinates } from "./FaceDetection";
+import { getPoseCoordinates } from "./PoseDetection";
+
 
 function moveJoint(joint, Rx, Ry, Rz){
   joint.rotation.x = Rx
   joint.rotation.y = Ry
   joint.rotation.z = Rz
 }
+
+
+function find_angle(A,B,C) {
+  var AB = Math.sqrt(Math.pow(B[0]-A[0],2)+ Math.pow(B[1]-A[1],2));    
+  var BC = Math.sqrt(Math.pow(B[0]-C[0],2)+ Math.pow(B[1]-C[1],2)); 
+  var AC = Math.sqrt(Math.pow(C[0]-A[0],2)+ Math.pow(C[1]-A[1],2));
+  return Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
+}
+
+let Ry_neck = 0;
 
 export default function Stacy(props) {
   const group = useRef();
@@ -28,24 +40,61 @@ export default function Stacy(props) {
 
   useFrame((state, delta) => {
     mixer.update(delta)
-    // moveJoint(nodes.mixamorigNeck, 0, Math.PI/2, 0)
-    // var pos127 = localStorage.getItem("pos127")
-    // var pos356 = localStorage.getItem("pos356")
-    let pos127 = getCoordinates(127)
-    let pos356 = getCoordinates(356)
-    let pos168 = getCoordinates(168)
 
+    //Get Face coordinates
+    let pos10 = getFaceCoordinates(10)
+    let pos152 = getFaceCoordinates(152)
+
+    let alpha = (pos152[1] -  pos10[1])/480
+    // let zMax = 0
+    // let zMin = -40
+    let zMax = 200
+    let zMin = -200
+    let Pz = (zMax - zMin)* alpha + zMin
+    nodes["mixamorigHips"].position.y = Pz;
+    // console.log(alpha)
+
+    //Get Face coordinates
+    let pos127 = getFaceCoordinates(127)
+    let pos356 = getFaceCoordinates(356)
+    let pos168 = getFaceCoordinates(168)
+
+    //Face Vertical rotation
     let topSectionWidth = pos356[1] - pos168[1]
-    console.log(topSectionWidth)
-    let Rx_neck = -Math.PI/4
+    // console.log(topSectionWidth)
+    let Rx_neck = 0
 
+    //Face lateral rotation
     let faceWidth = pos127[0] - pos356[0]
     let RightPartWidth = pos356[0] - pos168[0]
-    let Ry_neck = 0.5 * Math.PI * ((RightPartWidth/faceWidth) + 0.5)
+    if (faceWidth !== 0){
+      Ry_neck = 0.5 * Math.PI * ((RightPartWidth/faceWidth) + 0.5)
+    }
     
-
+    //Update Face joints
     moveJoint(nodes.mixamorigNeck, Rx_neck, Ry_neck, 0)
     moveJoint(nodes.mixamorigSpine, 0, 0, 0)
+
+    //Get Pose coordinates
+    let pos5 = getFaceCoordinates(5)
+    let pos6 = getFaceCoordinates(6)
+    let pos8 = getFaceCoordinates(8)
+    // console.log(pos5, pos6, pos8)
+    if ((pos5 !== undefined) && (pos6 !== undefined) && (pos8 !== undefined)){
+      // console.log(find_angle(pos5, pos6, pos8))
+    }
+    
+    nodes["mixamorigHips"].scale.x = 1;
+    nodes["mixamorigHips"].scale.y = 1;
+    nodes["mixamorigHips"].scale.z = 1;
+
+    nodes["mixamorigHips"].position.x = 0;
+    // nodes["mixamorigHips"].position.y = -200;
+    nodes["mixamorigHips"].position.z = -270;
+
+    
+
+
   })
 
   return (
@@ -55,7 +104,7 @@ export default function Stacy(props) {
     <group ref={group} {...props} dispose={null}>
       <object3D
         name="Stacy"
-        rotation={[1.5707964611537577, 0, 0]}
+        rotation={[Math.PI/2, 0, 0]}
         scale={[
           0.009999999776482582,
           0.009999999776482582,
@@ -65,7 +114,7 @@ export default function Stacy(props) {
         <primitive object={nodes["mixamorigHips"]} />
         <skinnedMesh
           name="stacy"
-          rotation={[-1.5707964611537577, 0, 0]}
+          rotation={[-Math.PI/2, 0, 0]}
           scale={[100, 100, 99.9999771118164]}
           skeleton={nodes["stacy"].skeleton}
         >
