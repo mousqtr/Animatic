@@ -52,6 +52,8 @@ export default function Stacy(props) {
     let zMin = -200
     let Pz = (zMax - zMin)* alpha + zMin
     nodes["mixamorigHips"].position.y = Pz;
+    nodes["mixamorigHips"].position.x = 0;
+    nodes["mixamorigHips"].position.z = -270;
     // console.log(alpha)
 
     //Get Face coordinates
@@ -88,9 +90,7 @@ export default function Stacy(props) {
     nodes["mixamorigHips"].scale.y = 1;
     nodes["mixamorigHips"].scale.z = 1;
 
-    nodes["mixamorigHips"].position.x = 0;
-    // nodes["mixamorigHips"].position.y = -200;
-    nodes["mixamorigHips"].position.z = -270;
+
 
     
 
